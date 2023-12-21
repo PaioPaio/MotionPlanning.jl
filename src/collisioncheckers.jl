@@ -90,13 +90,20 @@ end
 ## Convenience Constructors
 _type_sort(obstacles) = obstacles
 _type_sort(obstacles::Vector{T}) where {T} = isconcretetype(T) ? obstacles : TypeSortedCollection(obstacles)
-function ContinuousCollisionChecker(_obstacles, robot::R=PointRobot(), state2config::S2C=identity) where {R,S2C}
+function ContinuousCollisionChecker(_obstacles::Vector{T}, robot::R=PointRobot(), state2config::S2C=identity) where {T,R,S2C}
     obstacles = _type_sort(_obstacles)
     CollisionChecker{true,typeof(obstacles),R,S2C}(obstacles, robot, state2config, Ref(0), Ref(0))
 end
-function DiscreteCollisionChecker(_obstacles, robot::R=PointRobot(), state2config::S2C=identity) where {R,S2C}
+function ContinuousCollisionChecker(_obstacle::T, robot::R=PointRobot(), state2config::S2C=identity) where {T,R,S2C}
+    ContinuousCollisionChecker([_obstacle], robot, state2config)
+end
+
+function DiscreteCollisionChecker(_obstacles::Vector{T}, robot::R=PointRobot(), state2config::S2C=identity) where {T,R,S2C}
     obstacles = _type_sort(_obstacles)
     CollisionChecker{false,typeof(obstacles),R,S2C}(obstacles, robot, state2config, Ref(0), Ref(0))
+end
+function DiscreteCollisionChecker(_obstacle::T, robot::R=PointRobot(), state2config::S2C=identity) where {T,R,S2C}
+    DiscreteCollisionChecker([_obstacle], robot, state2config)
 end
 
 # Super basic collision checking; `import SeparatingAxisTheorem2D` or ... to load more advanced capabilities
@@ -106,13 +113,13 @@ function sweep_intersecting(B::AxisAlignedBox{N}, x0, xf) where {N}
     all(B.lo[i] <= max(x0[i], xf[i]) && min(x0[i], xf[i]) <= B.hi[i] for i in 1:N) && _sweep_intersecting(B, x0, xf)
 end
 function _sweep_intersecting(B::AxisAlignedBox{N}, x0, xf) where {N}
-    any((λ = (ifelse(x0[i] < B.lo[i], B.lo[i], B.hi[i]) - x0[i])/(xf[i] - x0[i]);
-        0 <= λ <= 1 && all(i == j || B.lo[j] <= x0[j] + (xf[j] - x0[j])*λ <= B.hi[j] for j in 1:N)) for i in 1:N)
+    any((λ = (ifelse(x0[i] < B.lo[i], B.lo[i], B.hi[i]) - x0[i]) / (xf[i] - x0[i]);
+    0 <= λ <= 1 && all(i == j || B.lo[j] <= x0[j] + (xf[j] - x0[j]) * λ <= B.hi[j] for j in 1:N)) for i in 1:N)
 end
 
 function sweep_intersecting(B::Ball, x0, xf)
     all(B.c[i] - B.r <= max(x0[i], xf[i]) &&
-        min(x0[i], xf[i]) <= B.c[i] + B.r for i in 1:N) && _sweep_intersecting(B, x0, xf)
+        min(x0[i], xf[i]) <= B.c[i] + B.r for i in 1:dimension(B)) && _sweep_intersecting(B, x0, xf)
 end
 function _sweep_intersecting(B::Ball, x0, xf)
     x0 in B && return true
@@ -122,7 +129,7 @@ function _sweep_intersecting(B::Ball, x0, xf)
     a = dot(X, X)
     b = dot(Y, Y)
     c = dot(X, Y)
-    a*C.r*C.r < a*b - c*c && return false
+    a * B.r * B.r < a * b - c * c && return false
     0 <= c <= a
 end
 

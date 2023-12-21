@@ -41,23 +41,24 @@ struct NearNeighborGraph{T,SS<:SampleSet,BVP<:SteeringBVP,R,NC<:NeighborhoodCach
     goal_neighbors::Vector{D}
 end
 function NearNeighborGraph{T}(nodes::SS, bvp::BVP, r::R, edge_cache::NC, NN_data_structure::DS,
-                              init_neighbors::Vector{D}, goal_neighbors::Vector{D}) where {T,SS,BVP,R,NC,DS,D}
+    init_neighbors::Vector{D}, goal_neighbors::Vector{D}) where {T,SS,BVP,R,NC,DS,D}
     NearNeighborGraph{T,SS,BVP,R,NC,DS,D}(nodes, bvp, r, edge_cache, NN_data_structure, init_neighbors, goal_neighbors)
 end
 function NearNeighborGraph(nodes::SampleSet,
-                           bvp::SteeringBVP;
-                           near_style::Union{Val{:variable},Val{:fixedradius},Val{:fixedknn}}=Val(:fixedradius),
-                           include_controls::BoolVal=Val(!(bvp isa GeometricSteering) && nodes isa TiledSampleSet),
-                           edge_cache::NeighborhoodCache=default_edge_cache(nodes, bvp, include_controls, near_style),
-                           NN_data_structure::NearNeighborDataStructure=default_NN_data_structure(nodes, bvp,
-                                                                                                  include_controls))
+    bvp::SteeringBVP;
+    near_style::Union{Val{:variable},Val{:fixedradius},Val{:fixedknn}}=Val(:fixedradius),
+    include_controls::BoolVal=Val(!(bvp isa GeometricSteering) && nodes isa TiledSampleSet),
+    edge_cache::NeighborhoodCache=default_edge_cache(nodes, bvp, include_controls, near_style),
+    NN_data_structure::NearNeighborDataStructure=default_NN_data_structure(nodes, bvp,
+        include_controls))
     T = neighbor_info_type(nodes, bvp, include_controls=include_controls)
+    #T = neighbor_info_type(nodes, bvp, include_controls=Val(true))
     X = indextype(T)
     R = costtype(T)
     D = Dict{X,T}
-    r = near_style === Val(:variable)    ? nothing :
+    r = near_style === Val(:variable) ? nothing :
         near_style === Val(:fixedradius) ? RefValue{R}(zero(R)) :
-     #= near_style === Val(:fixedknn)   =# RefValue{Nearest}(Nearest(0))
+        RefValue{Nearest}(Nearest(0))     #= near_style === Val(:fixedknn)   =#
     init_neighbors = D[D()]
     goal_neighbors = D[]
     NearNeighborGraph{T}(nodes, bvp, r, edge_cache, NN_data_structure, init_neighbors, goal_neighbors)
@@ -79,7 +80,7 @@ Base.getindex(G::NearNeighborGraph, i) = G.nodes[i]
 Base.getindex(G::NearNeighborGraph, i, j) = SteeringEdge(G.bvp, G[i], G[j])    # TODO: use cached controls if applicable
 
 setradius!(G::NearNeighborGraph{<:Any,<:Any,<:Any,<:RefValue}, r) = (G.r[] != r && reset!(G.edge_cache); G.r[] = r)
-setradius!(G::NearNeighborGraph{<:Any,<:Any,<:Any,Nothing},    r) = error("Cannot setradius! for variable radius graph")
+setradius!(G::NearNeighborGraph{<:Any,<:Any,<:Any,Nothing}, r) = error("Cannot setradius! for variable radius graph")
 function setinit!(G::NearNeighborGraph{NeighborInfo{X,D,U}}, x::State) where {X,D,U}
     G.nodes.init = x
     G.init_neighbors[1] = Dict{X,NeighborInfo{X,D,U}}()
@@ -112,17 +113,17 @@ end
 
 function neighbors(G::NearNeighborGraph{T,<:ExplicitSampleSet}, v_or_x; dir::F_or_B=Val(:F)) where {T}
     neighborhood = neighbors(G.edge_cache, G.NN_data_structure, G.nodes, G.bvp, v_or_x, G.r[],
-                             dir=dir, include_controls=Val(includes_controls(T)))
+        dir=dir, include_controls=Val(includes_controls(T)))
     include_init_and_goal_neighbors(G, neighborhood, v_or_x, dir)
 end
 function neighbors(G::NearNeighborGraph{T,<:ExplicitSampleSet}, v_or_x, r; dir::F_or_B=Val(:F)) where {T}
     neighborhood = neighbors(StreamingNC(), G.NN_data_structure, G.nodes, G.bvp, v_or_x, r,
-                             dir=dir, include_controls=Val(includes_controls(T)))
+        dir=dir, include_controls=Val(includes_controls(T)))
     include_init_and_goal_neighbors(G, neighborhood, v_or_x, r, dir)
 end
 function neighbors(G::NearNeighborGraph{T,<:TiledSampleSet}, v::TiledIndex; dir::F_or_B=Val(:F)) where {T}
     relative_nbhd = neighbors(G.edge_cache, G.NN_data_structure, G.nodes, G.bvp, zero_lattice_component(v), G.r[],
-                              dir=dir, include_controls=Val(includes_controls(T)))
+        dir=dir, include_controls=Val(includes_controls(T)))
     neighborhood = (shift_lattice_component(n, v.on_lattice) for n in relative_nbhd)
     include_init_and_goal_neighbors(G, neighborhood, v, dir)
 end
@@ -137,7 +138,8 @@ function include_init_and_goal_neighbors(G::NearNeighborGraph, neighborhood, v_o
     include_init_and_goal_neighbors(G, neighborhood, v_or_x, G.r[], dir)
 end
 function include_init_and_goal_neighbors(G::NearNeighborGraph{T,<:SampleSet,<:SteeringBVP,<:RefValue{<:Number}},
-                                         neighborhood, v::SampleIndex, dir) where {T}
+    neighborhood, v::SampleIndex, dir) where {T}
+    # Iterators.flatten((neighborhood,(D[v] for D in extras if v in keys(D))))
     Flatten2{T}(neighborhood, (D[v] for D in (dir === Val(:F) ? G.goal_neighbors : G.init_neighbors) if v in keys(D)))
 end
 function include_init_and_goal_neighbors(G::NearNeighborGraph, neighborhood, v::SampleIndex, r, dir)
@@ -146,15 +148,19 @@ end
 function include_init_and_goal_neighbors(G::NearNeighborGraph{T}, neighborhood, x::State, r::Number, dir) where {T}
     extra_inds = dir === Val(:F) ? -eachindex(G.nodes.goal_samples) : 0:0    # actually doubt type stability matters
     extras = neighbor_info_iterator(G.nodes, G.bvp, x, extra_inds, r,
-                                    dir=dir, include_controls=Val(includes_controls(T)))
-    Flatten2{T}(neighborhood, Iterators.filter(n -> n.cost <= r, extras))
+        dir=dir, include_controls=Val(includes_controls(T)))
+    # Iterators.flatten((neighborhood,(D[v] for D in extras if v in keys(D))))  
+    Iterators.flatten((neighborhood, Iterators.filter(n -> n.cost <= r, extras)))
+    # Flatten2{T}(neighborhood, Iterators.filter(n -> n.cost <= r, extras))
 end
 function include_init_and_goal_neighbors(G::NearNeighborGraph{T}, neighborhood, x::State, r::Nearest, dir) where {T}
     extra_inds = dir === Val(:F) ? -eachindex(G.nodes.goal_samples) : 0:0    # actually doubt type stability matters
     neighborhood = collect_if_not_Array(neighborhood)
-    extras = neighbor_info_iterator(G.nodes, G.bvp, x, extra_inds, neighborhood[1].cost,
-                                    dir=dir, include_controls=Val(includes_controls(T)))
-    foreach(n -> update_knn!(neighborhood, n), extras)
+    if first(extra_inds) != last(extra_inds)
+        extras = neighbor_info_iterator(G.nodes, G.bvp, x, extra_inds, neighborhood[1].cost,
+            dir=dir, include_controls=Val(includes_controls(T))) #TODO write includes_controls
+        foreach(n -> update_knn!(neighborhood, n), extras)
+    end
     neighborhood
 end
 
@@ -167,7 +173,7 @@ function FullTreeNodeInfo{X,D}(; parent=zero(X), cost_to_come=zero(D), children=
     (parent=parent, cost_to_come=cost_to_come, children=children)
 end
 
-# TODOs
+# TODO
 # - add `dirty` flag to track NearNeighborGraph init_neighbors/goal_neighbors
 # - also, enforce compute_init_and_goal_neighbors! if R<:RefValue{<:Number} -- otherwise, brittleness
 # ✓ NeighborInfo U should maybe be <: Union{...,Missing} instead of Union{...,Nothing}

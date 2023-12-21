@@ -1,13 +1,14 @@
 export rrt!
 
 function rrt!(P::MPProblem; max_sample_count=Inf,
-                            time_limit=Inf,
-                            steering_eps=0.1,    # TODO: compute from P.state_space dims?
-                            goal_bias=0.05,
-                            compute_full_metadata=true)
+    time_limit=Inf,
+    steering_eps=0.1,    # TODO: compute from P.state_space dims?
+    goal_bias=0.05,
+    compute_full_metadata=true,
+    stopifgoal::Bool=true)
     metadata = @standard_setup!(P)
     @assert(isfinite(max_sample_count) || isfinite(time_limit),
-            "At least one of max_sample_count and time_limit must be finite.")
+        "At least one of max_sample_count and time_limit must be finite.")
     metadata[:planner] = :RRT
     metadata[:max_sample_count] = max_sample_count
     metadata[:time_limit] = time_limit
@@ -20,7 +21,7 @@ function rrt!(P::MPProblem; max_sample_count=Inf,
     P.graph = NearNeighborGraph(nodes, P.bvp, near_style=Val(:variable))
 
     # Solve
-    rrt!(P.state_space, P.bvp, P.init, P.goal, P.collision_checker, P.graph, metadata, P.solution.elapsed)
+    rrt!(P.state_space, P.bvp, P.init, P.goal, P.collision_checker, P.graph, metadata, stopifgoal, P.solution.elapsed)
 
     # Post-Processing
     if compute_full_metadata
@@ -32,33 +33,44 @@ function rrt!(P::MPProblem; max_sample_count=Inf,
 end
 
 function rrt!(state_space::StateSpace,
-              bvp::SteeringBVP,
-              init::State,
-              goal::Goal,
-              collision_checker::CollisionChecker,
-              graph::NearNeighborGraph{NeighborInfo{X,D,U}},
-              metadata::Dict{Symbol,Any},
-              planner_start_time=time(),
-              max_sample_count=metadata[:max_sample_count],
-              time_limit=metadata[:time_limit],
-              steering_eps=D(metadata[:steering_eps]),
-              goal_bias=metadata[:goal_bias],
-              node_info=node_info_datastructure(graph.nodes, TreeNodeInfo{X,D})) where {X,D,U}
+    bvp::SteeringBVP,
+    init::State,
+    goal::Goal,
+    collision_checker::CollisionChecker,
+    graph::NearNeighborGraph{NeighborInfo{X,D,U}},
+    metadata::Dict{Symbol,Any},
+    stopifgoal::Bool,
+    planner_start_time=time(),
+    max_sample_count=metadata[:max_sample_count],
+    time_limit=metadata[:time_limit],
+    steering_eps=D(metadata[:steering_eps]),
+    goal_bias=metadata[:goal_bias],
+    node_info=node_info_datastructure(graph.nodes, TreeNodeInfo{X,D})) where {X,D,U}
     i = 1
+    j = max_sample_count
     while i < max_sample_count && time() - planner_start_time < time_limit
         x_rand = rand_free_state(collision_checker, rand() < goal_bias ? goal : state_space)
         v_near, cost, controls = first(neighbors(graph, x_rand, Nearest(1), dir=Val(:B)))
         x_near = graph[v_near]
         x_new, cost, controls = steer_towards(bvp, x_near, x_rand, steering_eps, cost, controls)
+
         if is_free_edge(collision_checker, bvp, x_near, x_new, controls)
             i += 1
             addstates!(graph, x_new)
             push!(node_info, (parent=v_near, cost_to_come=node_info[v_near].cost_to_come + cost))
         end
-        x_new in goal && break
+
+        if x_new in goal
+            if stopifgoal
+                j = i'
+                break
+            elseif j > i
+                j = i
+            end
+        end
     end
 
-    metadata[:solved] = graph[i] in goal
-    record_solution!(metadata, node_info, i, 0)
+    metadata[:solved] = graph[j] in goal
+    record_solution!(metadata, node_info, j, 0)
     nothing
 end

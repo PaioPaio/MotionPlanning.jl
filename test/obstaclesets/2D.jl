@@ -1,44 +1,44 @@
 using MotionPlanning
 
-ISRR_2H{T<:AbstractFloat}(::Type{T} = Float64) = Compound2D(
+ISRR_2H(::Type{T}=Float64) where {T<:AbstractFloat} = Compound2D(
     Shape2D{T}[
-        Box2D([T(.0), T(.16)], [T(.36), T(.5)]),
-        Box2D([T(.4), T(.5)], [T(.19), T(.35)]),
-        Box2D([T(.22), T(.46)], [T(.57), T(.75)]),
-        Box2D([T(.75), T(1.)], [T(.64), T(.77)]),
-        Box2D([T(.22), T(.8)], [T(.34), T(.51)])
+        Box2D([T(0.0), T(0.16)], [T(0.36), T(0.5)]),
+        Box2D([T(0.4), T(0.5)], [T(0.19), T(0.35)]),
+        Box2D([T(0.22), T(0.46)], [T(0.57), T(0.75)]),
+        Box2D([T(0.75), T(1.0)], [T(0.64), T(0.77)]),
+        Box2D([T(0.22), T(0.8)], [T(0.34), T(0.51)])
     ]
 )
 
-TRI_BALLS{T<:AbstractFloat}(::Type{T} = Float64) = Compound2D(
+TRI_BALLS(::Type{T}=Float64) where {T<:AbstractFloat} = Compound2D(
     Shape2D{T}[
-        Polygon([(T(.3), T(.3)), (T(.7), T(.3)), (T(.5), T(.65))]),
-        Circle([T(.3), T(.3)], T(.15)),
-        Circle([T(.7), T(.3)], T(.15)),
-        Circle([T(.5), T(.65)], T(.15))
+        Polygon([(T(0.3), T(0.3)), (T(0.7), T(0.3)), (T(0.5), T(0.65))]),
+        Circle([T(0.3), T(0.3)], T(0.15)),
+        Circle([T(0.7), T(0.3)], T(0.15)),
+        Circle([T(0.5), T(0.65)], T(0.15))
     ]
 )
 
-ISRR_POLY{T<:AbstractFloat}(::Type{T} = Float64) = Compound2D(
+ISRR_POLY(::Type{T}=Float64) where {T<:AbstractFloat} = Compound2D(
     Shape2D{T}[
-        Polygon([(T(.0), T(.25)), (T(.27), T(.28)), (T(.17), T(.4)), (T(.0), T(.4))]),
-        Polygon([(T(.5), T(.2)), (T(.2), T(.5)), (T(.25), T(.7)), (T(.4), T(.8)), (T(.6), T(.8)), (T(.7), T(.5))]),
-        Polygon([(T(.55), T(.2)), (T(.75), T(.5)), (T(.85), T(.5)), (T(.85), T(.2))]),
+        Polygon([(T(0.0), T(0.25)), (T(0.27), T(0.28)), (T(0.17), T(0.4)), (T(0.0), T(0.4))]),
+        Polygon([(T(0.5), T(0.2)), (T(0.2), T(0.5)), (T(0.25), T(0.7)), (T(0.4), T(0.8)), (T(0.6), T(0.8)), (T(0.7), T(0.5))]),
+        Polygon([(T(0.55), T(0.2)), (T(0.75), T(0.5)), (T(0.85), T(0.5)), (T(0.85), T(0.2))]),
         # Polygon([(T(.3), T(.6)), (T(.15), T(.85)), (T(.4), T(.6))]),
-        Circle([T(.9), T(.65)], T(.1))
+        Circle([T(0.9), T(0.65)], T(0.1))
     ]
 )
 
-ISRR_POLY_WITH_SPIKE{T<:AbstractFloat}(::Type{T} = Float64) = Compound2D(
+ISRR_POLY_WITH_SPIKE(::Type{T}=Float64) where {T<:AbstractFloat} = Compound2D(
     Shape2D{T}[
-        Polygon([(T(.0), T(.25)), (T(.27), T(.28)), (T(.17), T(.4)), (T(.0), T(.4))]),
-        Polygon([(T(.5), T(.2)), (T(.2), T(.5)), (T(.25), T(.7)), (T(.4), T(.8)), (T(.6), T(.8)), (T(.7), T(.5))]),
-        Polygon([(T(.55), T(.2)), (T(.75), T(.5)), (T(.85), T(.5)), (T(.85), T(.2))]),
-        Polygon([(T(.3), T(.6)), (T(.15), T(.85)), (T(.4), T(.6))]),
-        Circle([T(.9), T(.65)], T(.1))
+        Polygon([(T(0.0), T(0.25)), (T(0.27), T(0.28)), (T(0.17), T(0.4)), (T(0.0), T(0.4))]),
+        Polygon([(T(0.5), T(0.2)), (T(0.2), T(0.5)), (T(0.25), T(0.7)), (T(0.4), T(0.8)), (T(0.6), T(0.8)), (T(0.7), T(0.5))]),
+        Polygon([(T(0.55), T(0.2)), (T(0.75), T(0.5)), (T(0.85), T(0.5)), (T(0.85), T(0.2))]),
+        Polygon([(T(0.3), T(0.6)), (T(0.15), T(0.85)), (T(0.4), T(0.6))]),
+        Circle([T(0.9), T(0.65)], T(0.1))
     ]
 )
 
-EMPTY_2D{T<:AbstractFloat}(::Type{T} = Float64) = Compound2D(Shape2D{T}[])
+EMPTY_2D{T<:AbstractFloat}(::Type{T}=Float64) = Compound2D(Shape2D{T}[])
 
 nothing

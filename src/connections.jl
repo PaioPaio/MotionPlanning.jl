@@ -67,42 +67,52 @@ end
 
 # Plotting
 @recipe function f(e::SteeringEdge; state2config=identity, config2viz=identity,
-                                    dims=(1, 2), num_waypoints=10, plot_endpoints=true,
-                                    plot_x0=true, plot_xf=true)
-    state2config   --> state2config
-    config2viz     --> config2viz
-    dims           --> dims
-    num_waypoints  --> num_waypoints
+    dims=(1, 2), num_waypoints=10, plot_endpoints=true,
+    plot_x0=true, plot_xf=true)
+    state2config --> state2config
+    config2viz --> config2viz
+    dims --> dims
+    num_waypoints --> num_waypoints
     plot_endpoints --> plot_endpoints
-    plot_x0        --> plot_x0
-    plot_xf        --> plot_xf
+    plot_x0 --> plot_x0
+    plot_xf --> plot_xf
     SVector(e)
 end
 
 @recipe function f(edges::AbstractVector{<:SteeringEdge}; state2config=identity, config2viz=identity,
-                                                          dims=(1, 2), num_waypoints=10, plot_endpoints=true,
-                                                          plot_x0=true, plot_xf=true)
+    dims=(1, 2), num_waypoints=10, plot_endpoints=true,
+    labelstext=nothing,
+    plot_x0=false, plot_xf=true, color_edge=:grey)
     x, y = dims
-    plot_endpoints && plot_x0 && @series begin
-        seriestype  := :scatter
-        pts = [state2config(e.x0) for e in edges]
-        [p[x] for p in pts], [p[y] for p in pts]
+    X = Union{Float64,Vector{Float64}}[]
+    Y = Union{Float64,Vector{Float64}}[]
+    for e in edges
+        pts = waypoints(e, num_waypoints)
+        append!(X, [[p[x] for p in pts]])
+        append!(Y, [[p[y] for p in pts]])
     end
-    plot_endpoints && plot_xf && @series begin
-        seriestype  := :scatter
-        pts = [state2config(e.xf) for e in edges]
-        [p[x] for p in pts], [p[y] for p in pts]
-    end
-    @series begin
-        X = Union{Missing,Float64}[]
-        Y = Union{Missing,Float64}[]
-        for e in edges
-            pts = waypoints(e, num_waypoints)
-            append!(X, [p[x] for p in pts])
-            append!(Y, [p[y] for p in pts])
-            push!(X, missing)
-            push!(Y, missing)
+    for i in eachindex(edges)
+        @series begin
+            seriestype := :line
+            if color_edge isa Array
+                color --> color_edge[i]
+            else
+                color --> color_edge
+            end
+            X[i], Y[i]
         end
-        X, Y
     end
+    plot_endpoints && plot_x0 && @series begin
+            seriestype := :scatter
+            color --> color_edge
+            pts = [state2config(e.x0) for e in edges]
+            [p[x] for p in pts], [p[y] for p in pts]
+        end
+    plot_endpoints && plot_xf && @series begin
+            seriestype := :scatter
+            series_annotations --> labelstext
+            color --> color_edge
+            pts = [state2config(e.xf) for e in edges]
+            [p[x] for p in pts], [p[y] for p in pts]
+        end
 end

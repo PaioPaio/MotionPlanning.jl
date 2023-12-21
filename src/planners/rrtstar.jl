@@ -6,25 +6,26 @@ function update_descendant_costs_to_come!(node_info, v, Δc)
     foreach(w -> update_descendant_costs_to_come!(node_info, w, Δc), v_info.children)
 end
 
-function rrtstar_default_radius_function(state_space::StateSpace, bvp::GeometricSteering, radius_scale_factor=1)
+# Geometric Steering
+function rrtstar_default_radius_function(state_space::StateSpace, bvp::SteeringBVP{SingleIntegratorDynamics{N},Time,BoundedControlNorm,SteeringCache}, radius_scale_factor=1.0) where {N}
     d = dimension(state_space)
-    γ = radius_scale_factor*(2*(1 + 1/d)*volume(state_space)/volume(Ball{d}))^(1/d)
-    i -> γ*(log(i)/i)^(1/d)
+    γ = radius_scale_factor * (2 * (1 + 1 / d) * volume(state_space) / volume(Ball{d}))^(1 / d)
+    i -> γ * (log(i) / i)^(1 / d)
 end
 function rrtstar_default_radius_function(state_space::StateSpace, bvp::SteeringBVP)
     error("rrtstar_default_radius_function not implemented yet for SteeringBVP type $(typeof(bvp))")
 end
 
 function rrtstar!(P::MPProblem; max_sample_count=Inf,
-                                time_limit=Inf,
-                                steering_eps=0.1,    # TODO: compute from P.state_space dims?
-                                radius_scale_factor=1,
-                                r=rrtstar_default_radius_function(P.state_space, P.bvp, radius_scale_factor),
-                                goal_bias=0.05,
-                                compute_full_metadata=true)
+    time_limit=Inf,
+    steering_eps=0.1,    # TODO: compute from P.state_space dims?
+    radius_scale_factor=1,
+    r=rrtstar_default_radius_function(P.state_space, P.bvp, radius_scale_factor),
+    goal_bias=0.05,
+    compute_full_metadata=true)
     metadata = @standard_setup!(P)
     @assert(isfinite(max_sample_count) || isfinite(time_limit),
-            "At least one of max_sample_count and time_limit must be finite.")
+        "At least one of max_sample_count and time_limit must be finite.")
     metadata[:planner] = :RRTstar
     metadata[:max_sample_count] = max_sample_count
     metadata[:time_limit] = time_limit
@@ -38,6 +39,7 @@ function rrtstar!(P::MPProblem; max_sample_count=Inf,
     nodes = ExplicitSampleSet(P.init, S[], [P.init])    # nodes.V = [P.init] to work around FLANN empty index segfault
     P.graph = NearNeighborGraph(nodes, P.bvp, near_style=Val(:variable))
 
+    #Infiltrator.@infiltrate
     # Solve
     rrtstar!(P.state_space, P.bvp, P.init, P.goal, P.collision_checker, P.graph, metadata, P.solution.elapsed)
 
@@ -51,31 +53,34 @@ function rrtstar!(P::MPProblem; max_sample_count=Inf,
 end
 
 function rrtstar!(state_space::StateSpace,
-                  bvp::SteeringBVP,
-                  init::State,
-                  goal::Goal,
-                  collision_checker::CollisionChecker,
-                  graph::NearNeighborGraph{NeighborInfo{X,D,U}},
-                  metadata::Dict{Symbol,Any},
-                  planner_start_time=time(),
-                  r::R=metadata[:r],
-                  max_sample_count=metadata[:max_sample_count],
-                  time_limit=metadata[:time_limit],
-                  steering_eps=D(metadata[:steering_eps]),
-                  goal_bias=metadata[:goal_bias],
-                  node_info=node_info_datastructure(graph.nodes, FullTreeNodeInfo{X,D})) where {X,D,U,R}
+    bvp::SteeringBVP,
+    init::State,
+    goal::Goal,
+    collision_checker::CollisionChecker,
+    graph::NearNeighborGraph{NeighborInfo{X,D,U}},
+    metadata::Dict{Symbol,Any},
+    planner_start_time=time(),
+    r::R=metadata[:r],
+    max_sample_count::Int64=metadata[:max_sample_count],
+    time_limit=metadata[:time_limit],
+    steering_eps=D(metadata[:steering_eps])::D,
+    goal_bias=metadata[:goal_bias]::Float64,
+    node_info=node_info_datastructure(graph.nodes, FullTreeNodeInfo{X,D})) where {X,D,U,R}
     i = 1
     while i < max_sample_count && time() - planner_start_time < time_limit
         x_rand = rand_free_state(collision_checker, rand() < goal_bias ? goal : state_space)
         v_near, cost, controls = first(neighbors(graph, x_rand, Nearest(1), dir=Val(:B)))
         x_near = graph[v_near]
         x_new, cost, controls = steer_towards(bvp, x_near, x_rand, steering_eps, cost, controls)
+
         if is_free_edge(collision_checker, bvp, x_near, x_new, controls)
             ri = min(D(r(i)), steering_eps)
             i += 1
             addstates!(graph, x_new)
             Δc_min = cost
             v_min, c_min = v_near, node_info[v_near].cost_to_come + Δc_min
+
+            #Infiltrator.@infiltrate
             for (v, Δc, u) in neighbors(graph, i, ri, dir=Val(:B))
                 c = node_info[v].cost_to_come + Δc
                 if c < c_min && is_free_edge(collision_checker, bvp, graph[v], x_new, u)

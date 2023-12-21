@@ -4,6 +4,7 @@ module MotionPlanning
 
 using LinearAlgebra
 using Statistics
+using Infiltrator
 
 using Reexport
 @reexport using StaticArrays
@@ -42,13 +43,13 @@ include("planners.jl")
 
 function __init__()
     # CollisionChecker glue code
-    @require SeparatingAxisTheorem2D="33f35c42-577e-5c66-8569-bbf1771cbf32" include("collisioncheckers/separatingaxistheorem2D.jl")
+    @require SeparatingAxisTheorem2D = "33f35c42-577e-5c66-8569-bbf1771cbf32" include("collisioncheckers/separatingaxistheorem2D.jl")
     # @require GeometryTypes
     # @require Bullet3
 
     # NearNeighborDataStructure glue code
-    @require NearestNeighbors="b8a86587-4115-5ab1-83bc-aa920d37bbce" include("nearneighbors/nearestneighbors.jl")
-    @require FLANN="4ef67f76-e0de-5105-ac01-03b6482fb4f8" include("nearneighbors/flann.jl")
+    @require NearestNeighbors = "b8a86587-4115-5ab1-83bc-aa920d37bbce" include("nearneighbors/nearestneighbors.jl")
+    @require FLANN = "4ef67f76-e0de-5105-ac01-03b6482fb4f8" include("nearneighbors/flann.jl")
 end
 
 end # module

@@ -2,7 +2,7 @@ function standard_setup!(P)
     tic = time()
     reset!(P.collision_checker)
     P.status = is_free_state(P.collision_checker, P.init) ? :inprogress :
-                                                            (@warn "Initial state is infeasible!"; :infeasible)
+               (@warn "Initial state is infeasible!"; :infeasible)
     P.solution = MPSolution(P.status, nothing, tic, Dict{Symbol,Any}())
     nothing
 end
@@ -17,10 +17,10 @@ end
 
 function backtrace_path(node_info, z, terminal_index)
     path_nodes = [z]
-    costs_to_come  = [node_info[z].cost_to_come]
+    costs_to_come = [node_info[z].cost_to_come]
     while path_nodes[1] != terminal_index
         pushfirst!(path_nodes, node_info[path_nodes[1]].parent)
-        pushfirst!(costs_to_come,  node_info[path_nodes[1]].cost_to_come)
+        pushfirst!(costs_to_come, node_info[path_nodes[1]].cost_to_come)
     end
     path_nodes, costs_to_come
 end
@@ -32,8 +32,12 @@ function record_solution!(metadata, node_info, z, terminal_index)
     end
 end
 
-struct  ForwardAdjacencyDict{X<:SampleIndex,Y<:Union{X,Vector{X}}} d::Dict{X,Y} end
-struct BackwardAdjacencyDict{X<:SampleIndex,Y<:Union{X,Vector{X}}} d::Dict{X,Y} end
+struct ForwardAdjacencyDict{X<:SampleIndex,Y<:Union{X,Vector{X}}}
+    d::Dict{X,Y}
+end
+struct BackwardAdjacencyDict{X<:SampleIndex,Y<:Union{X,Vector{X}}}
+    d::Dict{X,Y}
+end
 
 function record_tree!(metadata, node_info; omit::F=always_false) where {F}
     metadata[:graph] = BackwardAdjacencyDict(

@@ -15,10 +15,6 @@ ConfigSpaceObstacle(set::S) where {S} = Obstacle{:configspace,S}(set)
 WorkspaceObstacle(set::S) where {S}   = Obstacle{:workspace,S}(set)
 intersecting(o::Obstacle, x) = intersecting(o.set, x)
 sweep_intersecting(o::Obstacle, x0, xf) = sweep_intersecting(o.set, x0, xf)
-@recipe function f(o::Obstacle; dims=(1, 2))
-    dims --> dims
-    o.set
-end
 
 # Abstract Robot Types (speculative for now)
 abstract type RobotCollisionBody end
@@ -36,10 +32,6 @@ end
 const ContinuousCollisionChecker{O,R,S2C} = CollisionChecker{true,O,R,S2C}
 const DiscreteCollisionChecker{O,R,S2C}   = CollisionChecker{false,O,R,S2C}
 reset!(CC::CollisionChecker) = (CC.motion_count[] = CC.edge_count[] = 0)
-@recipe function f(CC::CollisionChecker; dims=(1, 2))
-    dims --> dims
-    foreach(o -> @series(begin o end), CC.obstacles)
-end
 
 # General Methods for Dispatch
 ## is_free_state

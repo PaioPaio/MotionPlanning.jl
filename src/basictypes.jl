@@ -17,13 +17,6 @@ Base.rand(SS::BoundedStateSpace{S}) where {S} = convert(S, rand(SS.bounded_set))
 dimension(SS::BoundedStateSpace) = dimension(SS.bounded_set)
 boundingbox(SS::BoundedStateSpace) = boundingbox(SS.bounded_set)
 volume(SS::BoundedStateSpace) = volume(SS.bounded_set)
-@recipe function f(SS::BoundedStateSpace; dims=(1, 2)) #, statespace_color=:black, statespace_linecolor=statespace_color)
-    dims --> dims
-    linecolor := :match
-    fillalpha := 0
-    label --> ""
-    SS.bounded_set
-end
 
 # Config
 abstract type AbstractConfig end

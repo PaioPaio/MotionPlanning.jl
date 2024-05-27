@@ -14,14 +14,6 @@ inflate(B::AxisAlignedBox, ε) = AxisAlignedBox(B.lo .- ε, B.hi .+ ε)
 dimension(B::AxisAlignedBox{N}) where {N} = N
 boundingbox(B::AxisAlignedBox) = B
 volume(B::AxisAlignedBox) = prod(B.hi - B.lo)
-@recipe function f(B::AxisAlignedBox; dims=(1, 2))
-    seriestype :=  :shape
-    fillcolor  --> :match
-    linecolor  --> :match
-    label      --> ""
-    x, y = dims
-    SVector(B.lo[x], B.hi[x], B.hi[x], B.lo[x]), SVector(B.lo[y], B.lo[y], B.hi[y], B.hi[y])
-end
 
 struct Ball{N,T} <: SimpleConvexSet
     c::SVector{N,T}
@@ -37,19 +29,9 @@ volume(::Type{Ball{N,T}}) where {N,T} = (k = div(N, 2); iseven(N) ? T(π)^k/fact
                                                                     2*factorial(k)*(4*T(π))^k/factorial(N))
 volume(::Type{Ball{N}}) where {N} = volume(Ball{N,Float64})
 volume(B::Ball{N,T}) where {N,T} = volume(Ball{N,T})*B.r^N
-@recipe function f(B::Ball; dims=(1, 2), n=64)
-    seriestype :=  :shape
-    fillcolor  --> :match
-    linecolor  --> :match
-    label      --> ""
-    x, y = dims
-    θ = range(-π, stop=π, length=n)
-    B.c[x] .+ B.r*cos.(θ), B.c[y] .+ B.r*sin.(θ)
-end
 
 struct SetComplement{S}
     set::S
 end
 SetComplement(S::SetComplement) = S.set
 Base.in(x, S::SetComplement) = !(x in S.set)
-@recipe f(S::SetComplement; dims=(1,2)) = nothing

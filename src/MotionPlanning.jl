@@ -26,6 +26,7 @@ include("graphs.jl")
 include("problems.jl")
 # include("sampling.jl")
 include("planners.jl")
+include("plotrecipes.jl")
 # include("postprocessors.jl")
 # include("plotting.jl")
 

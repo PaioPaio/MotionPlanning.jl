@@ -52,6 +52,7 @@ function record_graph!(metadata, node_info; omit::F=always_false) where {F}
 end
 
 function standard_wrapup!(P)
+    GC.safepoint() #maybe doesn't crash anymore ?
     metadata = P.solution.metadata
     metadata[:motion_checks] = P.collision_checker.motion_count[]
     metadata[:edge_checks] = P.collision_checker.edge_count[]

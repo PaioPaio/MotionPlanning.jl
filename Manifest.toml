@@ -47,7 +47,7 @@ uuid = "ade2ca70-3891-5945-98fb-dc099432e06a"
 
 [[deps.DifferentialDynamicsModels]]
 deps = ["LinearAlgebra", "StaticArrays"]
-path = "../DifferentialDynamicsModels.jl"
+path = "../DifferentialDynamicsModels"
 uuid = "cb52cc87-d0c7-5933-bad1-08679d8b4c67"
 version = "1.0.1"
 
@@ -149,9 +149,9 @@ version = "1.10.0"
 
 [[deps.StaticArrays]]
 deps = ["LinearAlgebra", "PrecompileTools", "Random", "StaticArraysCore"]
-git-tree-sha1 = "bf074c045d3d5ffd956fa0a461da38a44685d6b2"
+git-tree-sha1 = "9ae599cd7529cfce7fea36cf00a62cfc56f0f37c"
 uuid = "90137ffa-7385-5640-81b9-e52037218182"
-version = "1.9.3"
+version = "1.9.4"
 
     [deps.StaticArrays.extensions]
     StaticArraysChainRulesCoreExt = "ChainRulesCore"

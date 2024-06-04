@@ -7,12 +7,12 @@ export is_free_state, is_free_motion, is_free_config, is_free_sweep, rand_free_s
 struct Obstacle{T,S}
     set::S
 end
-const StateSpaceObstacle{S}  = Obstacle{:statespace,S}
+const StateSpaceObstacle{S} = Obstacle{:statespace,S}
 const ConfigSpaceObstacle{S} = Obstacle{:configspace,S}
-const WorkspaceObstacle{S}   = Obstacle{:workspace,S}
-StateSpaceObstacle(set::S) where {S}  = Obstacle{:statespace,S}(set)
+const WorkspaceObstacle{S} = Obstacle{:workspace,S}
+StateSpaceObstacle(set::S) where {S} = Obstacle{:statespace,S}(set)
 ConfigSpaceObstacle(set::S) where {S} = Obstacle{:configspace,S}(set)
-WorkspaceObstacle(set::S) where {S}   = Obstacle{:workspace,S}(set)
+WorkspaceObstacle(set::S) where {S} = Obstacle{:workspace,S}(set)
 intersecting(o::Obstacle, x) = intersecting(o.set, x)
 sweep_intersecting(o::Obstacle, x0, xf) = sweep_intersecting(o.set, x0, xf)
 
@@ -30,14 +30,14 @@ struct CollisionChecker{C,O,R<:RobotCollisionBody,S2C}
     edge_count::Base.RefValue{Int}
 end
 const ContinuousCollisionChecker{O,R,S2C} = CollisionChecker{true,O,R,S2C}
-const DiscreteCollisionChecker{O,R,S2C}   = CollisionChecker{false,O,R,S2C}
+const DiscreteCollisionChecker{O,R,S2C} = CollisionChecker{false,O,R,S2C}
 reset!(CC::CollisionChecker) = (CC.motion_count[] = CC.edge_count[] = 0)
 
 # General Methods for Dispatch
 ## is_free_state
 is_free_state(CC::CollisionChecker, x) = all(o -> is_free_state(o, CC.robot, CC.state2config, x), CC.obstacles)
 is_free_state(o::Obstacle, robot, s2c, x) = is_free_config(o, robot, s2c(x))
-is_free_state(o::StateSpaceObstacle,  robot, s2c, x) = !intersecting(o, x)
+is_free_state(o::StateSpaceObstacle, robot, s2c, x) = !intersecting(o, x)
 
 ## is_free_motion
 function is_free_motion(CC::CollisionChecker, x0, xf)
@@ -45,7 +45,7 @@ function is_free_motion(CC::CollisionChecker, x0, xf)
     all(o -> is_free_motion(o, CC.robot, CC.state2config, x0, xf), CC.obstacles)
 end
 is_free_motion(o::Obstacle, robot, s2c, x0, xf) = is_free_sweep(o, robot, s2c(x0), s2c(xf))
-is_free_motion(o::StateSpaceObstacle,  robot, s2c, x0, xf) = !sweep_intersecting(o, x0, xf)
+is_free_motion(o::StateSpaceObstacle, robot, s2c, x0, xf) = !sweep_intersecting(o, x0, xf)
 
 ## is_free_config
 is_free_config(o::ConfigSpaceObstacle, robot, q) = !intersecting(o, q)

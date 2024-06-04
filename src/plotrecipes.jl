@@ -127,14 +127,11 @@ end
     SS.bounded_set
 end
 
-@recipe function f(o::Obstacle; dims=(1, 2))
-    dims --> dims
-    o.set
-end
-
 @recipe function f(CC::CollisionChecker; dims=(1, 2))
     dims --> dims
-    foreach(o -> @series(begin o end), CC.obstacles)
+    foreach(o -> @series(begin
+        o
+    end), CC.obstacles)
 end
 
 @recipe function f(G::ConfigSpaceGoal; dims=(1, 2))
@@ -144,8 +141,8 @@ end
 
 @recipe function f(G::StateSpaceGoal; dims=(1, 2))
     if G.set isa AbstractArray{<:State}
-        seriestype  --> :scatter
-        markercolor :=  :match
+        seriestype --> :scatter
+        markercolor := :match
         x, y = dims
         [q[x] for q in G.set], [q[y] for q in G.set]
     else
@@ -154,23 +151,28 @@ end
     end
 end
 
+@recipe function f(o::Obstacle; dims=(1, 2))
+    dims --> dims
+    o.set
+end
+
 @recipe function f(B::AxisAlignedBox; dims=(1, 2))
-    seriestype :=  :shape
-    fillcolor  --> :match
-    linecolor  --> :match
-    label      --> ""
+    seriestype := :shape
+    fillcolor --> :match
+    linecolor --> :match
+    label --> ""
     x, y = dims
     SVector(B.lo[x], B.hi[x], B.hi[x], B.lo[x]), SVector(B.lo[y], B.lo[y], B.hi[y], B.hi[y])
 end
 
 @recipe function f(B::Ball; dims=(1, 2), n=64)
-    seriestype :=  :shape
-    fillcolor  --> :match
-    linecolor  --> :match
-    label      --> ""
+    seriestype := :shape
+    fillcolor --> :match
+    linecolor --> :match
+    label --> ""
     x, y = dims
     θ = range(-π, stop=π, length=n)
-    B.c[x] .+ B.r*cos.(θ), B.c[y] .+ B.r*sin.(θ)
+    B.c[x] .+ B.r * cos.(θ), B.c[y] .+ B.r * sin.(θ)
 end
 
-@recipe f(S::SetComplement; dims=(1,2)) = nothing
+@recipe f(S::SetComplement; dims=(1, 2)) = nothing

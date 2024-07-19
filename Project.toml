@@ -15,6 +15,7 @@ Reexport = "189a3867-3050-52da-a836-e630ba90ab69"
 Requires = "ae029012-a4dd-5104-9daa-d747884805df"
 StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
 Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
+ThreadsX = "ac1d9e8a-700a-412c-b207-f0111f4b6c0d"
 TypeSortedCollections = "94a5cd58-49a0-5741-bd07-fa4f4be8babf"
 UnPack = "3a884ed6-31ef-47d7-9d2a-63182c4928ed"
 

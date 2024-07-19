@@ -4,6 +4,7 @@ function update_descendant_costs_to_come!(node_info, v, Δc)
     v_info = node_info[v]
     node_info[v] = (v_info..., cost_to_come=v_info.cost_to_come + Δc)
     foreach(w -> update_descendant_costs_to_come!(node_info, w, Δc), v_info.children)
+    #ThreadsX.foreach(w -> update_descendant_costs_to_come!(node_info, w, Δc), v_info.children)
 end
 
 # Geometric Steering
@@ -39,7 +40,6 @@ function rrtstar!(P::MPProblem; max_sample_count=Inf,
     nodes = ExplicitSampleSet(P.init, S[], [P.init])    # nodes.V = [P.init] to work around FLANN empty index segfault
     P.graph = NearNeighborGraph(nodes, P.bvp, near_style=Val(:variable))
 
-    #Infiltrator.@infiltrate
     # Solve
     rrtstar!(P.state_space, P.bvp, P.init, P.goal, P.collision_checker, P.graph, metadata, P.solution.elapsed)
 
@@ -71,6 +71,7 @@ function rrtstar!(state_space::StateSpace,
         x_rand = rand_free_state(collision_checker, rand() < goal_bias ? goal : state_space)
         v_near, cost, controls = first(neighbors(graph, x_rand, Nearest(1), dir=Val(:B)))
         x_near = graph[v_near]
+        # Steer part
         x_new, cost, controls = steer_towards(bvp, x_near, x_rand, steering_eps, cost, controls)
 
         if is_free_edge(collision_checker, bvp, x_near, x_new, controls)
@@ -80,7 +81,7 @@ function rrtstar!(state_space::StateSpace,
             Δc_min = cost
             v_min, c_min = v_near, node_info[v_near].cost_to_come + Δc_min
 
-            #Infiltrator.@infiltrate
+            # Get set of nodes near to G[i] aka xnew  and ChooseParent (qua direzione dei neighbor è backwards)
             for (v, Δc, u) in neighbors(graph, i, ri, dir=Val(:B))
                 c = node_info[v].cost_to_come + Δc
                 if c < c_min && is_free_edge(collision_checker, bvp, graph[v], x_new, u)
@@ -88,13 +89,16 @@ function rrtstar!(state_space::StateSpace,
                 end
             end
 
+            # Update graph info 
             i_info = FullTreeNodeInfo{X,D}(parent=v_min, cost_to_come=c_min)
             push!(node_info, i_info)
             push!(node_info[v_min].children, i)
 
+            # Rewire 
             for (v, Δc, u) in neighbors(graph, i, ri, dir=Val(:F))
                 v_info = node_info[v]
                 if c_min + Δc < v_info.cost_to_come && is_free_edge(collision_checker, bvp, x_new, graph[v], u)
+                    #Main.@infiltrate
                     p_info = node_info[v_info.parent]
                     deleteat!(p_info.children, searchsortedfirst(p_info.children, v))
                     push!(i_info.children, v)

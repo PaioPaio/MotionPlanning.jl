@@ -37,7 +37,7 @@ reset!(CC::CollisionChecker) = (CC.motion_count[] = CC.edge_count[] = 0)
 ## is_free_state
 is_free_state(CC::CollisionChecker, x) = all(o -> is_free_state(o, CC.robot, CC.state2config, x), CC.obstacles)
 is_free_state(o::Obstacle, robot, s2c, x) = is_free_config(o, robot, s2c(x))
-is_free_state(o::StateSpaceObstacle, robot, s2c, x) = !intersecting(o, x)
+is_free_state(o::Union{StateSpaceObstacle,Ball}, robot, s2c, x) = !intersecting(o, x)
 
 ## is_free_motion
 function is_free_motion(CC::CollisionChecker, x0, xf)
@@ -45,7 +45,7 @@ function is_free_motion(CC::CollisionChecker, x0, xf)
     all(o -> is_free_motion(o, CC.robot, CC.state2config, x0, xf), CC.obstacles)
 end
 is_free_motion(o::Obstacle, robot, s2c, x0, xf) = is_free_sweep(o, robot, s2c(x0), s2c(xf))
-is_free_motion(o::StateSpaceObstacle, robot, s2c, x0, xf) = !sweep_intersecting(o, x0, xf)
+is_free_motion(o::Union{StateSpaceObstacle,Ball}, robot, s2c, x0, xf) = !sweep_intersecting(o, x0, xf)
 
 ## is_free_config
 is_free_config(o::ConfigSpaceObstacle, robot, q) = !intersecting(o, q)

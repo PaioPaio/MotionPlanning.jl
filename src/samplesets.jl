@@ -39,6 +39,7 @@ Base.eltype(nodes::ExplicitSampleSet{S}) where {S} = S
 Base.length(nodes::ExplicitSampleSet) = length(nodes.V)
 Base.getindex(nodes::ExplicitSampleSet, i::Int) = i > 0 ? nodes.V[i] : (i == 0 ? nodes.init : nodes.goal_samples[-i])
 Base.getindex(nodes::ExplicitSampleSet, i::Colon) = nodes.V[i]
+Base.getindex(nodes::ExplicitSampleSet, i::Vector{Int}) = map(x -> nodes[x], i)
 Base.eachindex(nodes::ExplicitSampleSet) = eachindex(nodes.V)
 indextype(nodes::ExplicitSampleSet) = Int
 function addstates!(nodes::ExplicitSampleSet, x::State)

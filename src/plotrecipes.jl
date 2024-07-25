@@ -1,8 +1,8 @@
 # Problem (main)
 @recipe function f(P::MPProblem; dims=(1, 2),
-    statespace_color=:black, statespace_alpha=1,
-    init_color=:coral4, init_alpha=1, init_markershape=:diamond, init_markersize=5,
-    goal_color=:green, goal_alpha=1, goal_markershape=:star, goal_markersize=10,
+    statespace_color=:black, statespace_alpha=1, statespace_width=0.2,
+    init_color=:maroon2, init_alpha=1, init_markershape=:diamond, init_markersize=10,
+    goal_color=:lightgreen, goal_alpha=1, goal_markershape=:star, goal_markersize=15,
     obstacle_color=:red, obstacle_alpha=1,
     show_graph=false, graph_color=:grey, graph_alpha=0.5, graph_markersize=2, graph_edge_waypoints=10,
     solution_color=:blue, solution_alpha=1, solution_markersize=2, solution_linewidth=2, solution_edge_waypoints=10,
@@ -13,6 +13,7 @@
     @series begin
         color --> statespace_color
         alpha --> statespace_alpha
+        linewidth --> statespace_width
         P.state_space
     end
     @series begin
@@ -119,9 +120,10 @@ end
         end
 end
 
-@recipe function f(SS::BoundedStateSpace; dims=(1, 2)) #, statespace_color=:black, statespace_linecolor=statespace_color)
+@recipe function f(SS::BoundedStateSpace; dims=(1, 2), statespace_width=0.2) #, statespace_color=:black, statespace_linecolor=statespace_color)
     dims --> dims
     linecolor := :match
+    linewidth --> statespace_width
     fillalpha := 0
     label --> ""
     SS.bounded_set
@@ -130,8 +132,8 @@ end
 @recipe function f(CC::CollisionChecker; dims=(1, 2))
     dims --> dims
     foreach(o -> @series(begin
-        o
-    end), CC.obstacles)
+            o
+        end), CC.obstacles)
 end
 
 @recipe function f(G::ConfigSpaceGoal; dims=(1, 2))

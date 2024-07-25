@@ -3,19 +3,19 @@ export rrtstar!
 function update_descendant_costs_to_come!(node_info, v, Δc)
     v_info = node_info[v]
     node_info[v] = (v_info..., cost_to_come=v_info.cost_to_come + Δc)
-    foreach(w -> update_descendant_costs_to_come!(node_info, w, Δc), v_info.children)
-    #ThreadsX.foreach(w -> update_descendant_costs_to_come!(node_info, w, Δc), v_info.children)
+    #foreach(w -> update_descendant_costs_to_come!(node_info, w, Δc), v_info.children)
+    ThreadsX.foreach(w -> update_descendant_costs_to_come!(node_info, w, Δc), v_info.children) #boh mi pare non cambi un cazzo
 end
 
 # Geometric Steering
-function rrtstar_default_radius_function(state_space::StateSpace, bvp::SteeringBVP{SingleIntegratorDynamics{N},Time,BoundedControlNorm,SteeringCache}, radius_scale_factor=1.0) where {N}
+function rrtstar_default_radius_function(state_space::StateSpace, bvp::SteeringBVP, radius_scale_factor=1.0)
     d = dimension(state_space)
     γ = radius_scale_factor * (2 * (1 + 1 / d) * volume(state_space) / volume(Ball{d}))^(1 / d)
     i -> γ * (log(i) / i)^(1 / d)
 end
-function rrtstar_default_radius_function(state_space::StateSpace, bvp::SteeringBVP)
+#= function rrtstar_default_radius_function(state_space::StateSpace, bvp::SteeringBVP)
     error("rrtstar_default_radius_function not implemented yet for SteeringBVP type $(typeof(bvp))")
-end
+end =#
 
 function rrtstar!(P::MPProblem; max_sample_count=Inf,
     time_limit=Inf,
@@ -73,6 +73,8 @@ function rrtstar!(state_space::StateSpace,
         x_near = graph[v_near]
         # Steer part
         x_new, cost, controls = steer_towards(bvp, x_near, x_rand, steering_eps, cost, controls)
+        # steer viene fatto fuori dal collision free così computa il control massimo dentro al controlbound
+        # magari invece collegandolo direttamente al coso sampleato va addosso a qualcosa
 
         if is_free_edge(collision_checker, bvp, x_near, x_new, controls)
             ri = min(D(r(i)), steering_eps)

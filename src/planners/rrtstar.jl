@@ -100,7 +100,6 @@ function rrtstar!(state_space::StateSpace,
             for (v, Δc, u) in neighbors(graph, i, ri, dir=Val(:F))
                 v_info = node_info[v]
                 if c_min + Δc < v_info.cost_to_come && is_free_edge(collision_checker, bvp, x_new, graph[v], u)
-                    #Main.@infiltrate
                     p_info = node_info[v_info.parent]
                     deleteat!(p_info.children, searchsortedfirst(p_info.children, v))
                     push!(i_info.children, v)

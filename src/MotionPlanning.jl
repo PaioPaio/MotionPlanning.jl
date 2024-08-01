@@ -4,7 +4,6 @@ module MotionPlanning
 
 using LinearAlgebra
 using Statistics
-using Infiltrator
 using ThreadsX
 
 using Reexport
